@@ -31,12 +31,13 @@ def get_acquisition_from_data(file) :
 
 
 def get_data_by_labels(labels, filenames, method="sparse") :
-    X_train = get_data_from_file(labels, filenames[0])
     if (method == "sparse") :
+        X_train = get_sparse_data_from_file(labels, filenames[0])
         for i in range (1, len(filenames)) :
             res = get_sparse_data_from_file(labels, filenames[i])
             X_train = np.concatenate((X_train, res), axis=1)
     else :
+        X_train = get_dense_data_from_file(labels, filenames[0])
         for i in range (1, len(filenames)) :
             res = get_dense_data_from_file(labels, filenames[i])
             X_train = np.concatenate((X_train, res), axis=1)
@@ -120,6 +121,8 @@ def get_dense_data_from_file(labels, filename) :
     start_frame = event_frames[0]-first_frame
     end_frame = event_frames[-1]-first_frame
 
+    (left_vector, right_vector) = interpolate_predictions(event_frames, event_labels, event_contexts, start_frame, end_frame)
+
     #print("Number of events : ", n_events)
     #print("Frames where there are events : ", event_frames)
 
@@ -128,13 +131,13 @@ def get_dense_data_from_file(labels, filename) :
     # 2*nb_labels : all coordinates y and z for each label
     # +2 : predictions
     # n : number of frames
-    X = acq.GetPoint(labels[0]).GetValues()[start_frame:end_frame+1, 1:3]
+    X = acq.GetPoint(labels[0]).GetValues()[start_frame:end_frame, 1:3]
     for i in range (1, len(labels)):
-        res = acq.GetPoint(labels[i]).GetValues()[start_frame:end_frame+1, 1:3]
+        res = acq.GetPoint(labels[i]).GetValues()[start_frame:end_frame, 1:3]
         X = np.concatenate((X, res), axis=1)
 
-    X = np.column_stack((X, event_labels.T))
-    X = np.column_stack((X, event_contexts.T))
+    X = np.column_stack((X, left_vector))
+    X = np.column_stack((X, right_vector))
     X = X.T
 
     #print("Matrix X :\n", X)
@@ -143,19 +146,26 @@ def get_dense_data_from_file(labels, filename) :
 
 def interpolate_predictions(event_frames, event_labels, event_contexts, start_frame, end_frame) :
     left = 0; right = 0;
-    left_vector = np.zeros(end_frame - start_frame + 1)
-    right_vector = np.zeros(end_frame - start_frame + 1)
+    left_vector = np.zeros(end_frame - start_frame)
+    right_vector = np.zeros(end_frame - start_frame)
 
     for i in range(len(event_frames)) :
-        if (event_contexts[i] == 'Left') :
-            if (event_labels[i] == 'Foot_Strike_GS') :
-                left_vector[left : event_frames[i]] = 0
+        #print(event_frames[i], ", Foot strike : ", event_labels[i], ", Left :", event_contexts[i])
+        index = event_frames[i] - event_frames[0]
+        if (event_contexts[i]) :
+            if (event_labels[i]) :
+                left_vector[left : index] = 0
             else :
-                left_vector[left : event_frames[i]] = 1
+                left_vector[left : index] = 1
+            left = index
         else :
-            if (event_labels[i] == 'Foot_Strike_GS') :
-                right_vector[right : event_frames[i]] = 0
+            if (event_labels[i]) :
+                right_vector[right : index] = 0
             else :
-                right_vector[right : event_frames[i]] = 1
+                right_vector[right : index] = 1
+            right = index
 
-    ## TODO: handle for the last indices from the last index to the end
+    left_vector[left:] = 1-left_vector[left-1]
+    right_vector[right:] = 1-right_vector[right-1]
+
+    return (left_vector, right_vector)

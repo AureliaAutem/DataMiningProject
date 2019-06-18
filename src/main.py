@@ -14,8 +14,8 @@ labels = ["LASI", "RASI", "LPSI", "RPSI"]
 #We separate the data
 (train, test) = split_train_test_files(root)
 
-X_train = get_data_by_labels(labels, train)
-X_test = get_data_by_labels(labels, test)
+X_train = get_data_by_labels(labels, train, method="dense")
+X_test = get_data_by_labels(labels, test, method="dense")
 
 print(X_train.shape)
 print(X_test.shape)
