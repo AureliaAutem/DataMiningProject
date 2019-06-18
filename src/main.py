@@ -8,11 +8,19 @@ from read_data import *
 from manipulation import *
 
 #We read all the data filenames
-foldername = "data/"
-filenames = glob.glob(foldername+"*.c3d")
-print(filenames)
-print(len(filenames))
+root = "data/"
+labels = ["LASI", "RASI", "LPSI", "RPSI"]
+
+#We separate the data
+(train, test) = split_train_test_files(root)
+
+X_train = get_data_by_labels(labels, train)
+X_test = get_data_by_labels(labels, test)
+
+print(X_train.shape)
+print(X_test.shape)
+
 
 #reading_data(filenames[0])
-for i in range (len(filenames)) :
-    print_infos(extract_infos(filenames[i], foldername))
+# for i in range (len(filenames)) :
+#     print_infos(extract_infos(filenames[i], foldername))
