@@ -1,0 +1,10 @@
+git clone https://github.com/allardhoeve/BTKCore.git
+cd BTKCore
+mkdir build
+cd build
+cmake -D BTK_WRAP_PYTHON=1 ..
+make
+
+make a failed :
+cmake -D BTK_WRAP_PYTHON=1 -fPIC ..
+
