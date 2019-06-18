@@ -9,8 +9,8 @@ from btk import btk
 # http://python-future.org/compatible_idioms.html
 
 # initialise
-reader = btk.btkAcquisitionFileReader() 
-reader.SetFilename("CP_GMFCS1_01916_20130128_18.c3d") 
+reader = btk.btkAcquisitionFileReader()
+reader.SetFilename("CP_GMFCS1_01916_20130128_18.c3d")
 reader.Update()
 acq = reader.GetOutput()
 
@@ -45,8 +45,8 @@ print('points : ', points)
 # exemple on how to construct array with markers from one frame
 Frame = 0
 data_FrameChosen = np.array([acq.GetPoint('LASI').GetValues()[Frame,:],
-                            acq.GetPoint('RASI').GetValues()[Frame,:], 
-                            acq.GetPoint('LPSI').GetValues()[Frame,:], 
+                            acq.GetPoint('RASI').GetValues()[Frame,:],
+                            acq.GetPoint('LPSI').GetValues()[Frame,:],
                             acq.GetPoint('RPSI').GetValues()[Frame,:]])
 
 print('shape : ', data_FrameChosen.shape)
