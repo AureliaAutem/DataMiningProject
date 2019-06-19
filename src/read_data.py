@@ -36,11 +36,14 @@ def get_data_by_labels(labels, filenames, method="sparse") :
         for i in range (1, len(filenames)) :
             res = get_sparse_data_from_file(labels, filenames[i])
             X_train = np.concatenate((X_train, res), axis=1)
-    else :
+    elif (method == "dense") :
         X_train = get_dense_data_from_file(labels, filenames[0])
         for i in range (1, len(filenames)) :
             res = get_dense_data_from_file(labels, filenames[i])
             X_train = np.concatenate((X_train, res), axis=1)
+    else :
+        print("'" + method + "'" + ' is not a correct method name for the function get_data_by_labels(). Accepted values asre:\n\nsparse\ndense')
+        exit(-1)
 
     return X_train
 
