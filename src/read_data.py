@@ -109,8 +109,6 @@ def get_sparse_data_from_file(labels, filename) :
     return X
 
 
-
-
 def get_dense_data_from_file(labels, filename) :
     # We create an acquisition to manipulate the file c3d
     acq = get_acquisition_from_data(filename)
@@ -141,9 +139,8 @@ def get_dense_data_from_file(labels, filename) :
     first_frame = acq.GetFirstFrame()
     start_frame = event_frames[0]-first_frame
     end_frame = event_frames[-1]-first_frame
+    vector = define_dense_labels(event_frames, event_labels, event_contexts, start_frame, end_frame)
 
-    #(left_vector, right_vector) = interpolate_predictions(event_frames, event_labels, event_contexts, start_frame, end_frame)
-    vector = define_labels(event_frames, event_labels, event_contexts, start_frame, end_frame)
 
     # We get the data for the selected labels
     # X of shape : (2*nb_labels+2) x (n)
@@ -154,115 +151,78 @@ def get_dense_data_from_file(labels, filename) :
     for i in range (1, len(labels)):
         res = acq.GetPoint(labels[i]).GetValues()[start_frame:end_frame, 0:3]
         X = np.concatenate((X, res), axis=1)
-
-    # X = np.column_stack((X, left_vector))
-    # X = np.column_stack((X, right_vector))
     X = scale(X, -1, 1)
-    X = np.column_stack((X, vector))
-    X = X.T
 
-    #print("Matrix X :\n", X)
-
+    X = np.column_stack((X, vector)).T
     return X
 
-def define_sparse_labels(event_frames, event_labels, event_contexts, start_frame, end_frame) :
+
+def define_dense_labels(event_frames, event_labels, event_contexts, start_frame, end_frame) :
+    """Function which define to which label an instance belong
+        0 : both feet are off
+        1 : right foot is down
+        2 : left foot is down
+        3 : both feet are down
+    """
+    left = 0; right = 0;
     vector = np.zeros(end_frame - start_frame)
-    pad = 2
 
     for i in range(len(event_frames)) :
-        #print(event_frames[i], ", Foot strike : ", event_labels[i], ", Left :", event_contexts[i])
         index = event_frames[i] - event_frames[0]
         if (event_contexts[i]) :
             if (event_labels[i]) :                  #Left strike
-                vector[index] = 1
-                vector = padding(vector, index, 1, pad)
+                left = 2
             else :                                  #Left off
-                vector[index] = 2
-                vector = padding(vector, index, 2, pad)
+                left = 0
         else :
             if (event_labels[i]) :                  #Right strike
-                vector[index] = 3
-                vector = padding(vector, index, 3, pad)
+                right = 1
             else :                                  #Right off
-                vector[index] = 4
-                vector = padding(vector, index, 4, pad)
+                right = 0
 
-    return vector
-
-def padding(vector, index, val, pad) :
-    if (index - pad < 0) :
-        vector[0:index] = val
-    else :
-        vector[index-pad:index] = val
-
-    if (index + pad >= len(vector)) :
-        vector[index:] = val
-    else :
-        vector[index:index+pad] = val
-
-    return vector
-
-
-
-def define_labels(event_frames, event_labels, event_contexts, start_frame, end_frame) :
-    left = 0; right = 0;
-    left_vector = np.zeros(end_frame - start_frame)
-    right_vector = np.zeros(end_frame - start_frame)
-    vector = np.zeros(end_frame - start_frame)
-
-    for i in range(len(event_frames)) :
-        #print(event_frames[i], ", Foot strike : ", event_labels[i], ", Left :", event_contexts[i])
-        index = event_frames[i] - event_frames[0]
-        if (event_contexts[i]) :
-            if (event_labels[i]) :
-                left_vector[left : index] = 0
-            else :
-                left_vector[left : index] = 1
-            left = index
+        if (i == len(event_frames)-1) :
+            vector[index : ] = left + right
         else :
-            if (event_labels[i]) :
-                right_vector[right : index] = 0
-            else :
-                right_vector[right : index] = 1
-            right = index
+            next_index = event_frames[i+1] - event_frames[0]
+            vector[index : next_index] = left + right
 
-    left_vector[left:] = 1-left_vector[left-1]
-    right_vector[right:] = 1-right_vector[right-1]
+    return vector;
 
-    for i in range (len(left_vector)) :
-        if (left_vector[i] == 0 and right_vector[i] == 0) :
-            vector[i] = 0
-        elif (left_vector[i] == 0 and right_vector[i] == 1) :
-            vector[i] = 1
-        elif (left_vector[i] == 1 and right_vector[i] == 0) :
-            vector[i] = 2
-        elif (left_vector[i] == 1 and right_vector[i] == 1) :
-            vector[i] = 3
 
-    return vector
 
-def interpolate_predictions(event_frames, event_labels, event_contexts, start_frame, end_frame) :
-    left = 0; right = 0;
-    left_vector = np.zeros(end_frame - start_frame)
-    right_vector = np.zeros(end_frame - start_frame)
-
-    for i in range(len(event_frames)) :
-        #print(event_frames[i], ", Foot strike : ", event_labels[i], ", Left :", event_contexts[i])
-        index = event_frames[i] - event_frames[0]
-        if (event_contexts[i]) :
-            if (event_labels[i]) :
-                left_vector[left : index] = 0
-            else :
-                left_vector[left : index] = 1
-            left = index
-        else :
-            if (event_labels[i]) :
-                right_vector[right : index] = 0
-            else :
-                right_vector[right : index] = 1
-            right = index
-
-    left_vector[left:] = 1-left_vector[left-1]
-    right_vector[right:] = 1-right_vector[right-1]
-
-    return (left_vector, right_vector)
+# def define_sparse_labels(event_frames, event_labels, event_contexts, start_frame, end_frame) :
+#     vector = np.zeros(end_frame - start_frame)
+#     pad = 2
+#
+#     for i in range(len(event_frames)) :
+#         #print(event_frames[i], ", Foot strike : ", event_labels[i], ", Left :", event_contexts[i])
+#         index = event_frames[i] - event_frames[0]
+#         if (event_contexts[i]) :
+#             if (event_labels[i]) :                  #Left strike
+#                 vector[index] = 1
+#                 vector = padding(vector, index, 1, pad)
+#             else :                                  #Left off
+#                 vector[index] = 2
+#                 vector = padding(vector, index, 2, pad)
+#         else :
+#             if (event_labels[i]) :                  #Right strike
+#                 vector[index] = 3
+#                 vector = padding(vector, index, 3, pad)
+#             else :                                  #Right off
+#                 vector[index] = 4
+#                 vector = padding(vector, index, 4, pad)
+#
+#     return vector
+#
+# def padding(vector, index, val, pad) :
+#     if (index - pad < 0) :
+#         vector[0:index] = val
+#     else :
+#         vector[index-pad:index] = val
+#
+#     if (index + pad >= len(vector)) :
+#         vector[index:] = val
+#     else :
+#         vector[index:index+pad] = val
+#
+#     return vector
