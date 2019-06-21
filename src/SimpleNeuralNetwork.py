@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch.autograd import Variable
+import numpy as np
 
 class SimpleNeuralNetwork(nn.Module) :
 
@@ -61,7 +62,9 @@ class SimpleNeuralNetwork(nn.Module) :
             optimizer.step()
 
     def test(self, X, y) :
-        return (self.predict(X).tolist() == y).mean()
+        y_pred = np.array(self.predict(X).tolist())
+        y_pred = np.argmax(y_pred, axis=1)
+        return (y_pred == y.T).mean()
 
     def predict(self, X) :
         return self(torch.from_numpy(X).float())

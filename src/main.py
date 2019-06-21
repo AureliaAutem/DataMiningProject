@@ -24,7 +24,7 @@ from write_data import *
 root = "data/"
 labels = ["RTOE", "LTOE", "RANK", "LANK", "RHEE", "LHEE", "T10"]
 learning_rate = 1e-4
-iter = 10000
+iter = 5000
 is_printing = True
 
 # We separate the data
@@ -74,4 +74,4 @@ if (is_printing) :
         pred = np.argmax(y_pred[i])
         print("Prediction : ", pred, " and original : ", (int)(y_train[i]))
 
-#print("Training accuracy : ", model.test())
+print("Testing accuracy : ", model.test(X_test, y_test))
