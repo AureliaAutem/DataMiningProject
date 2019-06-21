@@ -7,7 +7,18 @@ import glob                     #To read filenames in folder
 from read_data import *
 from manipulation import *
 from SimpleNeuralNetwork import *
+from write_data import *
 
+# reader = btk.btkAcquisitionFileReader()
+# reader.SetFilename("CP_GMFCS1_01916_20130128_18.c3d")
+# reader.Update()
+# acq = reader.GetOutput()
+# metadata = acq.GetMetaData()
+# point_labels = metadata.FindChild("POINT").value().FindChild("LABELS").value().GetInfo().ToString()
+#
+#
+# acq = sub_x_coord(point_labels, 'CP_GMFCS1_01916_20130128_18.c3d', 'T10')
+# write_acq(acq)
 
 # Some variables
 root = "data/"
