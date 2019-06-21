@@ -63,33 +63,15 @@ hidden_sizes = [X_train.shape[1], 15, 10, 5]
 out_size = 4
 
 # Model
-model = SimpleNeuralNetwork(hidden_sizes, out_size)
+model = SimpleNeuralNetwork(hidden_sizes, out_size, is_printing, iter, learning_rate)
 if (is_printing) : model.display()
 
-# Main algorithm
-loss_fn = torch.nn.MSELoss(reduction='sum')                         # Function to compute the loss
-optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate)   # Optimizer used to compute gradient descent
-
-for t in range(iter):
-
-    # Forward pass. This gives us the predictions for the training data.
-    # We call it as a function because Module objects override __call__ operator.
-    # We give a Tensor and we get a Tensor
-    y_pred = model(torch.from_numpy(X_train).float())
-
-    # We compute the loss by comparing the predicted and true values of y.
-    # We give tensors and we get a tensor.
-    loss = loss_fn(y_pred, torch.Tensor(y))
-    if (is_printing) : print(t, loss.item())
-
-    # Setup the gradient to 0 because otherwise they accumulate when we call
-    # backward
-    optimizer.zero_grad()
-    loss.backward()
-    optimizer.step()
+model.train(X_train, y)
 
 if (is_printing) :
-    y_pred = model(torch.from_numpy(X_train).float()).tolist()
+    y_pred = model.predict(X_train).tolist()
     for i in range (10) :
         pred = np.argmax(y_pred[i])
         print("Prediction : ", pred, " and original : ", (int)(y_train[i]))
+
+#print("Training accuracy : ", model.test())
