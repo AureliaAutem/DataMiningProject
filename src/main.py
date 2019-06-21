@@ -75,3 +75,5 @@ if (is_printing) :
         print("Prediction : ", pred, " and original : ", (int)(y_train[i]))
 
 print("Testing accuracy : ", model.test(X_test, y_test))
+
+model.display_loss_history()
