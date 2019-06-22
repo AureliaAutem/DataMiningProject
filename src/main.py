@@ -36,10 +36,7 @@ is_printing = True
 X_train, y_train = get_data_by_labels(labels, train, method="sparse")
 X_test, y_test = get_data_by_labels(labels, test, method="sparse")
 
-# for v in X_train:
-#     # v = X_train[i, :]
-#     # print(v[0:3:])
-#     plt.plot(v[:, 1], v[:, 2], 'ob')
+
 
 if (is_printing) :
     print("##### Infos about the data #####")
