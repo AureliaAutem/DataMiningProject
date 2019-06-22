@@ -77,13 +77,13 @@ class SimpleNeuralNetwork(nn.Module) :
     def predict(self, X) :
         return self(torch.from_numpy(X).float())
 
-    def display_loss_history(self) :
+    def display_loss_history(self, title_str) :
         time = np.arange(0, len(self.loss_history), 1)
 
         fig, ax = plt.subplots()
         ax.plot(time, self.loss_history)
 
         ax.set(xlabel='Epochs', ylabel='Loss',
-               title='Loss history for '+str(len(self.loss_history))+' epochs')
+               title=title_str)
         ax.grid()
         plt.show()

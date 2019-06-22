@@ -27,51 +27,38 @@ root = "data/"
 labels = ["RTOE", "LTOE", "RANK", "LANK", "RHEE", "LHEE", "T10"]
 learning_rate = 1e-4
 iter = 5000
-is_printing = True
+is_printing = False
+method = "dense"
+sub = False
 
 # We separate the data
 (train, test) = split_train_test_files(root)
-
 # We get the data (normalized) and we separate y and X
-X_train, y_train = get_data_by_labels(labels, train, method="sparse")
-X_test, y_test = get_data_by_labels(labels, test, method="sparse")
+X_train, y_train = get_data_by_labels(labels, train, method=method, sub=sub)
+X_test, y_test = get_data_by_labels(labels, test, method=method, sub=sub)
 
-
-
-if (is_printing) :
-    print("##### Infos about the data #####")
-    print("X_train : ", X_train.shape)
-    print("y_train : ", y_train.shape)
-    print("X_test : ", X_test.shape)
-    print("y_test : ", y_test.shape)
-
-
-input("Launch training with "+str(iter)+ " epochs ?")
+#Out size of the network, 5 for sparse data and 4 for dense data
+out_size = 5
+# Hyperparameters
+hidden_sizes = [X_train.shape[1], 15, 10, out_size]
 
 # We transform the state in a one hot encoded vector
 y = np.zeros((len(y_train), 5))
 for i in range (len(y_train)) :
     y[i, (int)(y_train[i])] = 1
 
-# Hyperparameters
-hidden_sizes = [X_train.shape[1], 15, 10, 5]
-out_size = 5
-
 # Model
 model = SimpleNeuralNetwork(hidden_sizes, out_size, is_printing, iter, learning_rate)
-if (is_printing) : model.display()
 
+print("Launch training with "+str(iter)+ " epochs...")
 model.train(X_train, y)
 
-if (is_printing) :
-    y_pred = model.predict(X_train).tolist()
-    for i in range (10) :
-        pred = np.argmax(y_pred[i])
-        print("Prediction : ", pred, " and original : ", (int)(y_train[i]))
+print("Test accuracy : ", model.test(X_test, y_test))
 
-print("Testing accuracy : ", model.test(X_test, y_test))
-
-model.display_loss_history()
+if (sub) :
+    model.display_loss_history("Loss history for "+str(iter)+" epochs with "+method+" and centralized data")
+else :
+    model.display_loss_history("Loss history for "+str(iter)+" epochs with "+method+" and data")
 
 
 

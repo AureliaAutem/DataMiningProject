@@ -211,8 +211,6 @@ def get_dense_data_from_file(labels, acq) :
         res = acq.GetPoint(labels[i]).GetValues()[start_frame:end_frame+1, 0:3]
         X = np.concatenate((X, res), axis=1)
     X = scale(X, -1, 1)
-
-    print(X.shape, vector.shape)
     X = np.column_stack((X, vector)).T
     return X
 
