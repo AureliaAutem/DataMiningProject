@@ -2,10 +2,31 @@
 from btk import btk             #To read the data in .c3d files
 import numpy as np
 import glob
+import random
 
 
 def split_train_test_files(root) :
-    """Split files in 2/3 for the training and 1/3 for the tests"""
+    """Get all c3d files in subfolders of root and split these files in
+    3 groups : train (2/3) and test (1/3)
+    Inputs :    - root : where are located the subfolders containing the data"""
+    folders = [f for f in glob.glob(root+"**/")]
+
+    train = []
+    test = []
+    for folder in folders :
+        filenames = glob.glob(folder+"*.c3d")
+        np.random.shuffle(filenames)
+
+        sep = round(len(filenames)/3*2)
+        train += filenames[:sep]
+        test += filenames[sep:]
+
+    return (train, test)
+
+def split_train_validation_test_files(root) :
+    """Get all c3d files in subfolders of root and split these files in
+    3 groups : train (1/2), validation (1/4) and test (1/4)
+    Inputs :    - root : where are located the subfolders containing the data"""
     folders = [f for f in glob.glob(root+"**/")]
 
     train = []
@@ -81,30 +102,24 @@ def get_sparse_data_from_file(labels, filename) :
     first_frame = acq.GetFirstFrame()
     start_frame = event_frames[0]-first_frame
     end_frame = event_frames[-1]-first_frame
-    vector = define_sparse_labels(event_frames, event_labels, event_contexts, start_frame, end_frame)
 
-    #print("Number of events : ", n_events)
-    #print("Frames where there are events : ", event_frames)
+    vector = define_sparse_labels(event_frames, event_labels, event_contexts)
+    vector = np.append(vector, np.zeros(len(event_frames)))
 
     # We get the data for the selected labels
     # X of shape : (2*nb_labels+2) x (n)
     # 2*nb_labels : all coordinates y and z for each label
     # +2 : predictions
     # n : number of frames
-    X = acq.GetPoint(labels[0]).GetValues()[event_frames, 0:3]
+    frames = define_sparse_no_event_frames(event_frames, event_labels, event_contexts, start_frame, end_frame)
+    X = acq.GetPoint(labels[0]).GetValues()[frames, 0:3]
     for i in range (1, len(labels)):
-        res = acq.GetPoint(labels[i]).GetValues()[event_frames, 0:3]
+        res = acq.GetPoint(labels[i]).GetValues()[frames, 0:3]
         X = np.concatenate((X, res), axis=1)
 
-    # X = np.column_stack((X, event_labels.T))
-    # X = np.column_stack((X, event_contexts.T))
-    X = np.column_stack((X, vector))
     X = scale(X, -1, 1)
-    for i in range (10) :
-        print(X[i])
+    X = np.column_stack((X, vector))
     X = X.T
-
-    #print("Matrix X :\n", X)
 
     return X
 
@@ -147,12 +162,13 @@ def get_dense_data_from_file(labels, filename) :
     # 2*nb_labels : all coordinates y and z for each label
     # +2 : predictions
     # n : number of frames
-    X = acq.GetPoint(labels[0]).GetValues()[start_frame:end_frame, 0:3]
+    X = acq.GetPoint(labels[0]).GetValues()[start_frame:end_frame+1, 0:3]
     for i in range (1, len(labels)):
-        res = acq.GetPoint(labels[i]).GetValues()[start_frame:end_frame, 0:3]
+        res = acq.GetPoint(labels[i]).GetValues()[start_frame:end_frame+1, 0:3]
         X = np.concatenate((X, res), axis=1)
     X = scale(X, -1, 1)
 
+    print(X.shape, vector.shape)
     X = np.column_stack((X, vector)).T
     return X
 
@@ -165,7 +181,7 @@ def define_dense_labels(event_frames, event_labels, event_contexts, start_frame,
         3 : both feet are down
     """
     left = 0; right = 0;
-    vector = np.zeros(end_frame - start_frame)
+    vector = np.zeros(end_frame - start_frame + 1)
 
     for i in range(len(event_frames)) :
         index = event_frames[i] - event_frames[0]
@@ -190,39 +206,31 @@ def define_dense_labels(event_frames, event_labels, event_contexts, start_frame,
 
 
 
-# def define_sparse_labels(event_frames, event_labels, event_contexts, start_frame, end_frame) :
-#     vector = np.zeros(end_frame - start_frame)
-#     pad = 2
-#
-#     for i in range(len(event_frames)) :
-#         #print(event_frames[i], ", Foot strike : ", event_labels[i], ", Left :", event_contexts[i])
-#         index = event_frames[i] - event_frames[0]
-#         if (event_contexts[i]) :
-#             if (event_labels[i]) :                  #Left strike
-#                 vector[index] = 1
-#                 vector = padding(vector, index, 1, pad)
-#             else :                                  #Left off
-#                 vector[index] = 2
-#                 vector = padding(vector, index, 2, pad)
-#         else :
-#             if (event_labels[i]) :                  #Right strike
-#                 vector[index] = 3
-#                 vector = padding(vector, index, 3, pad)
-#             else :                                  #Right off
-#                 vector[index] = 4
-#                 vector = padding(vector, index, 4, pad)
-#
-#     return vector
-#
-# def padding(vector, index, val, pad) :
-#     if (index - pad < 0) :
-#         vector[0:index] = val
-#     else :
-#         vector[index-pad:index] = val
-#
-#     if (index + pad >= len(vector)) :
-#         vector[index:] = val
-#     else :
-#         vector[index:index+pad] = val
-#
-#     return vector
+def define_sparse_labels(event_frames, event_labels, event_contexts) :
+    vector = np.zeros(len(event_frames))
+
+    for i in range(len(event_frames)) :
+        if (event_contexts[i]) :
+            if (event_labels[i]) :                  #Left strike
+                vector[i] = 1
+            else :                                  #Left off
+                vector[i] = 2
+        else :
+            if (event_labels[i]) :                  #Right strike
+                vector[i] = 3
+            else :                                  #Right off
+                vector[i] = 4
+
+    return vector
+
+def define_sparse_no_event_frames(event_frames, event_labels, event_contexts, start_frame, end_frame) :
+    frames = event_frames.tolist()
+
+    for i in range (len(event_frames)) :
+        frame = random.randint(start_frame, end_frame)
+        while (frame in frames) :
+            frame = random.randint(start_frame, end_frame)
+
+        frames += [frame]
+
+    return frames

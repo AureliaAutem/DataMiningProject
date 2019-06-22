@@ -31,10 +31,10 @@ is_printing = True
 (train, test) = split_train_test_files(root)
 
 # We get the data (normalized) and we separate y and X
-X_train = get_data_by_labels(labels, train, method="dense")
+X_train = get_data_by_labels(labels, train, method="sparse")
 y_train = X_train[-1:, :].T
 X_train = X_train[:-1, :].T
-X_test = get_data_by_labels(labels, test, method="dense")
+X_test = get_data_by_labels(labels, test, method="sparse")
 y_test = X_test[-1:, :].T
 X_test = X_test[:-1, :].T
 
@@ -43,8 +43,20 @@ perm = np.random.permutation(len(X_train))
 X_train = X_train[perm]
 y_train = y_train[perm]
 
+if (is_printing) :
+    print("##### Infos about the data #####")
+    print("X_train : ", X_train.shape)
+    print("y_train : ", y_train.shape)
+    print("X_test : ", X_test.shape)
+    print("y_test : ", y_test.shape)
+
+    print("\nFirst training instance :")
+    print(X_train[0, :], " : ", y_train[0, :])
+
+input()
+
 # We transform the state in a one hot encoded vector
-y = np.zeros((len(y_train), 4))
+y = np.zeros((len(y_train), 5))
 for i in range (len(y_train)) :
     y[i, (int)(y_train[i])] = 1
 
@@ -60,7 +72,7 @@ if (is_printing) :
 
 # Hyperparameters
 hidden_sizes = [X_train.shape[1], 15, 10, 5]
-out_size = 4
+out_size = 5
 
 # Model
 model = SimpleNeuralNetwork(hidden_sizes, out_size, is_printing, iter, learning_rate)
