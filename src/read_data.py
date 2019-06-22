@@ -4,7 +4,17 @@ import numpy as np
 import glob
 import random
 
+##### Basic functions for BTK #####
+def get_acquisition_from_data(file) :
+    """Get acquisition object to manipulate the data with BTK"""
+    # We create a new acquisition object
+    reader = btk.btkAcquisitionFileReader() # build a btk reader object
+    reader.SetFilename(file) # set a filename to the reader
+    reader.Update()
+    acq = reader.GetOutput() # acq is the btk aquisition object
+    return acq
 
+##### Functions to get filenames for data folder #####
 def split_train_test_files(root) :
     """Get all c3d files in subfolders of root and split these files in
     3 groups : train (2/3) and test (1/3)
@@ -49,41 +59,58 @@ def split_train_validation_test_files(root) :
 
     return (train, validation, test)
 
-def get_acquisition_from_data(file) :
-    """Get acquisition object to manipulate the data with BTK"""
-    # We create a new acquisition object
-    reader = btk.btkAcquisitionFileReader() # build a btk reader object
-    reader.SetFilename(file) # set a filename to the reader
-    reader.Update()
-    acq = reader.GetOutput() # acq is the btk aquisition object
-    return acq
 
-def scale(X, x_min, x_max):
-    """Function to scale each column of a matrix"""
-    nom = (X-X.min(axis=0))*(x_max-x_min)
-    denom = X.max(axis=0) - X.min(axis=0)
-    denom[denom==0] = 1
-    return x_min + nom/denom
-
+##### Functions to process the data #####
 def get_data_by_labels(labels, filenames, method="sparse") :
-    """Get the data according to the filenames and labels given in parameters"""
+    """Get the data according to the filenames and labels given in parameters
+    Inputs :    - labels : list of points we want to extract in the c3d files
+                - filenames : relative path to the data
+                - method : describes how we process the data, it can be :
+                    - sparse : we extract each frame labeled with an event and
+                                we add the same number of frames with no event
+                    - dense : we extract all frames from the first event to the
+                                last and we label them according to the feet
+                                position
+    Outputs :   - tuple (X, y)
+                    - X : instances of size (N, nb_labels*3)
+                    - y : classes of size (N, 1)
+    where N is the number of frames and nb_labels is the size of the list
+    'labels' that we multiply by 3 because there are 3 coordinates (x, y, z)
+    describing each label
+    The data is normalized between -1 and 1"""
+
     if (method == "sparse") :
-        X_train = get_sparse_data_from_file(labels, filenames[0])
+        data = get_sparse_data_from_file(labels, filenames[0])
         for i in range (1, len(filenames)) :
             res = get_sparse_data_from_file(labels, filenames[i])
-            X_train = np.concatenate((X_train, res), axis=1)
+            data = np.concatenate((data, res), axis=1)
     elif (method == "dense") :
-        X_train = get_dense_data_from_file(labels, filenames[0])
+        data = get_dense_data_from_file(labels, filenames[0])
         for i in range (1, len(filenames)) :
             res = get_dense_data_from_file(labels, filenames[i])
-            X_train = np.concatenate((X_train, res), axis=1)
+            data = np.concatenate((data, res), axis=1)
     else :
         print("'" + method + "'" + ' is not a correct method name for the function get_data_by_labels(). Accepted values asre:\n\nsparse\ndense')
         exit(-1)
 
-    return X_train
+    return (data[:-1, :].T, data[-1:, :].T)
 
 def get_sparse_data_from_file(labels, filename) :
+    """Extract instances and classes from one particular file in 'sparse' method.
+    We extract each frame labeled with an event and we add the same number of
+    frames with no event that we choose randomly.
+    Then we have 5 differents classes :
+    0 : no event
+    1 : left foot down
+    2 : left foot off
+    3 : right foot down
+    4 : right foot off
+    Inputs :    - labels : list of points we want to extract in the c3d file
+                - filename : relative path of the file
+    Outputs :   - X : data of size (nb_labels+1, nb_frames)
+    where nb_labels is the size of the 'labels' list, we add because we append
+    the class and nb_frames is the number of frames we will extract.
+    """
     # We create an acquisition to manipulate the file c3d
     acq = get_acquisition_from_data(filename)
 
@@ -115,16 +142,13 @@ def get_sparse_data_from_file(labels, filename) :
     vector = np.append(vector, np.zeros(len(event_frames)))
 
     # We get the data for the selected labels
-    # X of shape : (2*nb_labels+2) x (n)
-    # 2*nb_labels : all coordinates y and z for each label
-    # +2 : predictions
-    # n : number of frames
     frames = define_sparse_no_event_frames(event_frames, event_labels, event_contexts, start_frame, end_frame)
     X = acq.GetPoint(labels[0]).GetValues()[frames, 0:3]
     for i in range (1, len(labels)):
         res = acq.GetPoint(labels[i]).GetValues()[frames, 0:3]
         X = np.concatenate((X, res), axis=1)
 
+    #We normalize each column (each coordinate)
     X = scale(X, -1, 1)
     X = np.column_stack((X, vector))
     X = X.T
@@ -133,6 +157,21 @@ def get_sparse_data_from_file(labels, filename) :
 
 
 def get_dense_data_from_file(labels, filename) :
+    """Extract instances and classes from one particular file in 'dense' method.
+    we extract all frames from the first event to the last and we label them
+    according to the feet position.
+    Then we have 4 differents classes :
+    0 : both feet are off
+    1 : right foot is down
+    2 : left foot is down
+    3 : both feet are down
+    Inputs :    - labels : list of points we want to extract in the c3d file
+                - filename : relative path of the file
+    Outputs :   - X : data of size (nb_labels+1, nb_frames)
+    where nb_labels is the size of the 'labels' list, we add because we append
+    the class and nb_frames is the number of frames we will extract.
+    """
+
     # We create an acquisition to manipulate the file c3d
     acq = get_acquisition_from_data(filename)
 
@@ -166,10 +205,6 @@ def get_dense_data_from_file(labels, filename) :
 
 
     # We get the data for the selected labels
-    # X of shape : (2*nb_labels+2) x (n)
-    # 2*nb_labels : all coordinates y and z for each label
-    # +2 : predictions
-    # n : number of frames
     X = acq.GetPoint(labels[0]).GetValues()[start_frame:end_frame+1, 0:3]
     for i in range (1, len(labels)):
         res = acq.GetPoint(labels[i]).GetValues()[start_frame:end_frame+1, 0:3]
@@ -181,12 +216,29 @@ def get_dense_data_from_file(labels, filename) :
     return X
 
 
+
+##### Manipulation functions to normalize the data and define the labels #####
+def scale(X, x_min, x_max):
+    """Function to normalize each column of a matrix
+    In our case, we'll normalize between -1 and 1
+    Inputs :    - X : data we want to normalize
+                - x_min, x_max : bounds for the normalization
+    Outputs :   - array with the same size than X"""
+    nom = (X-X.min(axis=0))*(x_max-x_min)
+    denom = X.max(axis=0) - X.min(axis=0)
+    denom[denom==0] = 1
+    return x_min + nom/denom
+
 def define_dense_labels(event_frames, event_labels, event_contexts, start_frame, end_frame) :
-    """Function which define to which label an instance belong
+    """Function which define to which label each frame belong
         0 : both feet are off
         1 : right foot is down
         2 : left foot is down
         3 : both feet are down
+    Inputs :    - event_frames, event_labels, event_contexts : from BTK, to get
+                    and classify events
+                - start_frame, end_frame : first and last frame with events
+    Outputs :   - vector of size (nb_frames, 1)
     """
     left = 0; right = 0;
     vector = np.zeros(end_frame - start_frame + 1)
@@ -215,6 +267,17 @@ def define_dense_labels(event_frames, event_labels, event_contexts, start_frame,
 
 
 def define_sparse_labels(event_frames, event_labels, event_contexts) :
+    """Function which define to which label each frame belong
+        0 : no event
+        1 : left foot down
+        2 : left foot off
+        3 : right foot down
+        4 : right foot off
+    Inputs :    - event_frames, event_labels, event_contexts : from BTK, to get
+                    and classify events
+                - start_frame, end_frame : first and last frame with events
+    Outputs :   - vector of size (nb_frames, 1)
+    """
     vector = np.zeros(len(event_frames))
 
     for i in range(len(event_frames)) :
@@ -232,6 +295,13 @@ def define_sparse_labels(event_frames, event_labels, event_contexts) :
     return vector
 
 def define_sparse_no_event_frames(event_frames, event_labels, event_contexts, start_frame, end_frame) :
+    """Function which choose randomly frames with no event
+    Inputs :    - event_frames, event_labels, event_contexts : from BTK, to get
+                    and classify events
+                - start_frame, end_frame : first and last frame with events
+    Outputs :   - vector of size (nb_frames, 1)
+    where nb_frames is the length of event_frames
+    """
     frames = event_frames.tolist()
 
     for i in range (len(event_frames)) :
