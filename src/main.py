@@ -20,7 +20,7 @@ from matplotlib.lines import Line2D
 #
 #
 # acq = sub_x_coord(point_labels, 'CP_GMFCS1_01916_20130128_18.c3d', 'T10')
-# write_acq(acq)
+# write_acq(acq, 'updated.c3d')
 
 
 

@@ -24,8 +24,8 @@ def sub_x_coord(labels, file, to_sub):
     return acq
 
 
-def write_acq(acq):
+def write_acq_to_file(acq, file):
      writer = btk.btkAcquisitionFileWriter()
      writer.SetInput(acq)
-     writer.SetFilename('updated.c3d')
+     writer.SetFilename(file)
      writer.Update()
