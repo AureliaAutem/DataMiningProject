@@ -9,14 +9,17 @@ def split_train_test_files(root) :
     """Get all c3d files in subfolders of root and split these files in
     3 groups : train (2/3) and test (1/3)
     Inputs :    - root : where are located the subfolders containing the data"""
+    # We get the subfolders
     folders = [f for f in glob.glob(root+"**/")]
 
     train = []
     test = []
     for folder in folders :
+        # We get the files and shuffle them
         filenames = glob.glob(folder+"*.c3d")
         np.random.shuffle(filenames)
 
+        # We split the data
         sep = round(len(filenames)/3*2)
         train += filenames[:sep]
         test += filenames[sep:]
@@ -27,19 +30,24 @@ def split_train_validation_test_files(root) :
     """Get all c3d files in subfolders of root and split these files in
     3 groups : train (1/2), validation (1/4) and test (1/4)
     Inputs :    - root : where are located the subfolders containing the data"""
+    # We get the subfolders
     folders = [f for f in glob.glob(root+"**/")]
 
     train = []
+    validation = []
     test = []
     for folder in folders :
+        # We get the files and shuffle them
         filenames = glob.glob(folder+"*.c3d")
         np.random.shuffle(filenames)
 
-        sep = round(len(filenames)/3*2)
-        train += filenames[:sep]
-        test += filenames[sep:]
+        # We split the data
+        sep = round(len(filenames)/4)
+        train += filenames[:2*sep]
+        validation += filenames[2*sep:3*sep]
+        test += filenames[3*sep:]
 
-    return (train, test)
+    return (train, validation, test)
 
 def get_acquisition_from_data(file) :
     """Get acquisition object to manipulate the data with BTK"""
