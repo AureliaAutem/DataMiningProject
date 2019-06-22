@@ -61,7 +61,7 @@ def split_train_validation_test_files(root) :
 
 
 ##### Functions to process the data #####
-def get_data_by_labels(labels, filenames, method="sparse") :
+def get_data_by_labels(labels, filenames, method="sparse", sub=False) :
     """Get the data according to the filenames and labels given in parameters
     Inputs :    - labels : list of points we want to extract in the c3d files
                 - filenames : relative path to the data
@@ -79,15 +79,23 @@ def get_data_by_labels(labels, filenames, method="sparse") :
     describing each label
     The data is normalized between -1 and 1"""
 
+    acqs = []
+    for filename in filenames :
+        if (sub) :
+            acqs += [sub_x_coord(labels, filename, "T10")]
+        else :
+            acqs += [get_acquisition_from_data(filename)]
+
+
     if (method == "sparse") :
-        data = get_sparse_data_from_file(labels, filenames[0])
-        for i in range (1, len(filenames)) :
-            res = get_sparse_data_from_file(labels, filenames[i])
+        data = get_sparse_data_from_file(labels, acqs[0])
+        for i in range (1, len(acqs)) :
+            res = get_sparse_data_from_file(labels, acqs[i])
             data = np.concatenate((data, res), axis=1)
     elif (method == "dense") :
-        data = get_dense_data_from_file(labels, filenames[0])
-        for i in range (1, len(filenames)) :
-            res = get_dense_data_from_file(labels, filenames[i])
+        data = get_dense_data_from_file(labels, acqs[0])
+        for i in range (1, len(acqs)) :
+            res = get_dense_data_from_file(labels, acqs[i])
             data = np.concatenate((data, res), axis=1)
     else :
         print("'" + method + "'" + ' is not a correct method name for the function get_data_by_labels(). Accepted values asre:\n\nsparse\ndense')
@@ -95,7 +103,7 @@ def get_data_by_labels(labels, filenames, method="sparse") :
 
     return (data[:-1, :].T, data[-1:, :].T)
 
-def get_sparse_data_from_file(labels, filename) :
+def get_sparse_data_from_file(labels, acq) :
     """Extract instances and classes from one particular file in 'sparse' method.
     We extract each frame labeled with an event and we add the same number of
     frames with no event that we choose randomly.
@@ -111,9 +119,6 @@ def get_sparse_data_from_file(labels, filename) :
     where nb_labels is the size of the 'labels' list, we add because we append
     the class and nb_frames is the number of frames we will extract.
     """
-    # We create an acquisition to manipulate the file c3d
-    acq = get_acquisition_from_data(filename)
-
     # We extract the frames where there are events
     n_events = acq.GetEventNumber() # Number of events
 
@@ -156,7 +161,7 @@ def get_sparse_data_from_file(labels, filename) :
     return X
 
 
-def get_dense_data_from_file(labels, filename) :
+def get_dense_data_from_file(labels, acq) :
     """Extract instances and classes from one particular file in 'dense' method.
     we extract all frames from the first event to the last and we label them
     according to the feet position.
@@ -171,10 +176,6 @@ def get_dense_data_from_file(labels, filename) :
     where nb_labels is the size of the 'labels' list, we add because we append
     the class and nb_frames is the number of frames we will extract.
     """
-
-    # We create an acquisition to manipulate the file c3d
-    acq = get_acquisition_from_data(filename)
-
     # We extract the frames where there are events
     n_events = acq.GetEventNumber() # Number of events
     if (n_events == 0) :
@@ -214,6 +215,26 @@ def get_dense_data_from_file(labels, filename) :
     print(X.shape, vector.shape)
     X = np.column_stack((X, vector)).T
     return X
+
+def sub_x_coord(labels, file, to_sub):
+    acq = get_acquisition_from_data(file)
+
+    sub_val = acq.GetPoint(to_sub).GetValues()[:, 0]
+
+    for label in labels :
+        label = label.strip()
+        # print('Working with [' + label + ']')
+
+        updatedX = acq.GetPoint(label).GetValues()[:, 0]
+        updatedX = updatedX - sub_val
+
+        for i in range(len(updatedX)):
+            acq.GetPoint(label).SetValue(i, 0, updatedX[i])
+
+        # print('Updated ' + label)
+        # print(acq.GetPoint(label).GetValues()[0:10, :])
+
+    return acq
 
 
 
