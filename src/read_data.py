@@ -315,8 +315,8 @@ def define_sparse_no_event_frames(event_frames, event_labels, event_contexts, st
 
 
 def get_2D_disp_data(label, filename) :
-    """Can probably be deleted because it just returns the X values and the Y
-    labels separatly"""
+    """Used to get (Y,Z) data and associated class for a single file for data
+    visualisation for kmeans"""
     # We create an acquisition to manipulate the file c3d
     acq = get_acquisition_from_data(filename)
     x = acq.GetPoint(label).GetValues()[:, 1:3]
