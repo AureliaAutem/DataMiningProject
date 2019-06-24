@@ -1,6 +1,7 @@
 import os
 import write_data
 import train_NN
+import classify
 import matplotlib.pyplot as plt
 
 to_execute = 0
@@ -44,7 +45,7 @@ if (to_execute == 2) :
 
     # Classify all frames of a video
     index = np.random.randint(len(test))
-    classify_video(model, labels, test[index], "testEventW2.c3d", "dense")
+    classify.classify_video(model, labels, test[index], "testEventW2.c3d", "dense")
     pass
 
 # Visualize data for separability
