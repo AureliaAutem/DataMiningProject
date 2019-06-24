@@ -304,10 +304,10 @@ def define_dense_labels(event_frames, event_labels, event_contexts, start_frame,
                 right = 0
 
         if (i == len(event_frames)-1) :
-            vector[index : ] = left + right
+            vector[index : ] = left + right - 1
         else :
             next_index = event_frames[i+1] - event_frames[0]
-            vector[index : next_index] = left + right
+            vector[index : next_index] = left + right - 1
 
     return vector;
 

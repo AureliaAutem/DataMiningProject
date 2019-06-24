@@ -18,10 +18,20 @@ def sub_x_coord(labels, file, to_sub):
         for i in range(len(updatedX)):
             acq.GetPoint(label).SetValue(i, 0, updatedX[i])
 
-        # print('Updated ' + label)
-        # print(acq.GetPoint(label).GetValues()[0:10, :])
-
     return acq
+
+
+def sub_x_from_file(input, output) :
+    reader = btk.btkAcquisitionFileReader()
+    reader.SetFilename(input)
+    reader.Update()
+    acq = reader.GetOutput()
+    metadata = acq.GetMetaData()
+    point_labels = metadata.FindChild("POINT").value().FindChild("LABELS").value().GetInfo().ToString()
+
+
+    acq = sub_x_coord(point_labels, input, 'T10')
+    write_acq(acq, output)
 
 
 def write_acq_to_file(acq, file):
@@ -47,6 +57,7 @@ def get_events_from_dense_model(model, X):
     # Retrives the prediction of the model for input X
     y_pred = np.array(model.predict(X).tolist())
     y_pred = np.argmax(y_pred, axis=1)
+    y_pred += 1
     print(y_pred)
 
     events = []

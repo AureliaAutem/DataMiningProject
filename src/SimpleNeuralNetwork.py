@@ -17,7 +17,7 @@ class SimpleNeuralNetwork(nn.Module) :
     learning_rate = 1e-4
     test_accuracy = 0
 
-    def __init__(self, hidden_sizes, out_size, is_printing, iter, learning_rate) :
+    def __init__(self, hidden_sizes, out_size, is_printing, iter, learning_rate, sub) :
         super(SimpleNeuralNetwork, self).__init__()
 
         self.is_printing = is_printing
@@ -31,6 +31,16 @@ class SimpleNeuralNetwork(nn.Module) :
 
         self.out = nn.Linear(hidden_sizes[-1], out_size)
 
+        self.description = ""
+        for i in range (len(hidden_sizes)-1) :
+            self.description += str(hidden_sizes[i]) + " --> "
+        self.description += str(hidden_sizes[-1])
+        self.description += "\nTraining with " + str(iter) + " epochs"
+        if (sub) :
+            self.description += " and by centralizing x coordinate."
+        else :
+            self.description += "."
+
     def forward(self, x) :
         # Feedforward
         for layer in self.hidden:
@@ -39,12 +49,9 @@ class SimpleNeuralNetwork(nn.Module) :
 
         return output
 
-    def display(self) :
-        print("\n##### Model infos #####")
-        params = list(self.parameters())
-        print("Number of parameters : ", len(params))
-        print(self, "\n")
-
+    def __str__(self) :
+        return self.description
+        
     def train(self, X, y) :
         """Function to train the network"""
         # Main algorithm
