@@ -6,7 +6,7 @@ import train_NN
 import classify
 import matplotlib.pyplot as plt
 
-to_execute = 0
+to_execute = 7
 
 # Cross validation for dense data
 # Hyperparameters to test
@@ -57,6 +57,8 @@ if (to_execute == 3) :
     print("Processing the data...")
     show_graphic('LTOE', train)
     show_graphic('RTOE', train)
+    show_graphic('T10', train)
+    show_graphic('RANK', train)
     plt.show()
 
 # Substract x from a file and visualize it
@@ -68,3 +70,20 @@ if (to_execute == 5) :
     middle_sizes = [[20, 25]]
     for i in range (5) :
         train_NN.cross_validation_hidden_layers_sizes(middle_sizes, epochs, "dense")
+
+if (to_execute == 6) :
+
+    (train, test) = split_train_test_files("data/")
+
+    index = np.random.randint(len(train))
+    file = train[index]
+
+    show_labeled_x_speed('LTOE', file)
+    show_labeled_x_speed('RTOE', file)
+    plt.show()
+
+if (to_execute == 7) :
+
+    (train, test) = split_train_test_files("data/")
+
+    X_train, y_train = get_speed_and_labels(train)
