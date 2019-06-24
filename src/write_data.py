@@ -31,7 +31,7 @@ def sub_x_from_file(input, output) :
 
 
     acq = sub_x_coord(point_labels, input, 'T10')
-    write_acq(acq, output)
+    write_acq_to_file(acq, output)
 
 
 def write_acq_to_file(acq, file):
