@@ -28,7 +28,7 @@ def cross_validation_hidden_layers_sizes(middle_sizes, epochs, method) :
 
     # We separate the data
     #(train, validation, test) = split_train_validation_test_files(root)
-    (blocks, test) = split_cross_validation_test_files(root, len(middle_sizes)*2)
+    (blocks, test) = split_cross_validation_test_files(root, 10)
 
     middle_sizes = middle_sizes + middle_sizes
     models = []
@@ -59,7 +59,7 @@ def cross_validation_hidden_layers_sizes(middle_sizes, epochs, method) :
             models += [SimpleNeuralNetwork(hidden_sizes, out_size, is_printing, iter, learning_rate, sub)]
 
             print("\n("+str(i)+") Launch training with "+str(iter)+ " epochs...")
-            models[i].train(X_train, y)
+            models[i].train(X_train, y, register_loss=(l==0))
             validation_accuracy += [models[i].test(X_validation, y_validation)]
 
         models[i].validation_accuracy = sum(validation_accuracy)/len(validation_accuracy)
@@ -82,6 +82,10 @@ def cross_validation_hidden_layers_sizes(middle_sizes, epochs, method) :
         plt.title('Loss history (test accuracy = ' + '{:1.3f}'.format(models[i].validation_accuracy) + ')')
         plt.grid(True)
 
-    plt.show()
+    print("The best model found is : ")
+    print(models[max_arg])
 
-    return middle_sizes[max_arg]
+    X_test, y_test = get_data_by_labels(labels, test, method=method, sub=models[max_arg].sub)
+    print("\nTest accuracy for the best model : ", models[max_arg].test(X_test, y_test))
+
+    plt.show()

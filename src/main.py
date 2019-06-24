@@ -12,12 +12,9 @@ to_execute = 0
 # Cross validation for dense data
 # Hyperparameters to test
 if (to_execute == 0) :
-    epochs = 100
+    epochs = 5000
     middle_sizes = [[5],
-                    [15],
-                    [5, 5],
                     [15, 5],
-                    [20, 25],
                     [8, 8, 8]]
     train_NN.cross_validation_hidden_layers_sizes(middle_sizes, epochs, "dense")
 
@@ -27,10 +24,8 @@ if (to_execute == 0) :
 if (to_execute == 1) :
     epochs = 5000
     middle_sizes = [[5],
-                    [15],
-                    [5, 5],
-                    [10, 15],
-                    [15, 5]]
+                    [15, 5],
+                    [8, 8, 8]]
     train_NN.cross_validation_hidden_layers_sizes(middle_sizes, epochs, "sparse")
 
 # Train best model we found and save the results

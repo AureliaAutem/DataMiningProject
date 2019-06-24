@@ -30,6 +30,7 @@ class SimpleNeuralNetwork(nn.Module) :
             self.hidden.append(nn.Linear(hidden_sizes[k], hidden_sizes[k+1]))
 
         self.out = nn.Linear(hidden_sizes[-1], out_size)
+        self.sub = sub
 
         self.description = ""
         for i in range (len(hidden_sizes)-1) :
@@ -52,7 +53,7 @@ class SimpleNeuralNetwork(nn.Module) :
     def __str__(self) :
         return self.description
 
-    def train(self, X, y) :
+    def train(self, X, y, register_loss=True) :
         """Function to train the network"""
         # Main algorithm
         loss_fn = torch.nn.MSELoss(reduction='sum')                         # Function to compute the loss
@@ -68,7 +69,7 @@ class SimpleNeuralNetwork(nn.Module) :
             # We compute the loss by comparing the predicted and true values of y.
             # We give tensors and we get a tensor.
             loss = loss_fn(y_pred, torch.Tensor(y))
-            self.loss_history += [loss]
+            if (register_loss) : self.loss_history += [loss]
             if (self.is_printing) : print(t, loss.item())
 
             # Setup the gradient to 0 because otherwise they accumulate when we call
