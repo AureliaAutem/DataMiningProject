@@ -6,7 +6,6 @@ import math                     #To use ceil / floor
 
 # Our own functions
 from read_data import *
-from manipulation import *
 from write_data import *
 from visualize_data import *
 from SimpleNeuralNetwork import *

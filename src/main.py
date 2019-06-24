@@ -7,7 +7,7 @@ from read_data import *
 from visualize_data import *
 import SimpleNeuralNetwork
 
-to_execute = 3
+to_execute = 2
 
 # Cross validation for dense data
 # Hyperparameters to test
@@ -62,14 +62,8 @@ if (to_execute == 3) :
 if (to_execute == 4) :
     sub_x_from_file('CP_GMFCS1_01916_20130128_18.c3d', 'file_with_sub_x.c3d')
 
-# Execute several times train with the same parameters to see if the accuracy varies
+# Display separability of events according to speed
 if (to_execute == 5) :
-    epochs = 5000
-    middle_sizes = [[20, 25]]
-    for i in range (5) :
-        train_NN.cross_validation_hidden_layers_sizes(middle_sizes, epochs, "dense")
-
-if (to_execute == 6) :
 
     (train, test) = split_train_test_files("data/")
 
@@ -79,9 +73,3 @@ if (to_execute == 6) :
     show_labeled_x_speed('LTOE', file)
     show_labeled_x_speed('RTOE', file)
     plt.show()
-
-if (to_execute == 7) :
-
-    (train, test) = split_train_test_files("data/")
-
-    X_train, y_train = get_speed_and_labels(train)
