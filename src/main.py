@@ -79,15 +79,23 @@ model.display_loss_history()
 # # Classify all frames of a video
 # index = np.random.randint(len(test))
 # X_pred = get_prediction_X(labels, test[index])
-# events = get_events_from_model(model, X_pred) # Only for dense representation of data
+# events = get_events_from_dense_model(model, X_pred) # Only for dense representation of data
+# # events = get_events_from_sparse_model(model, X_pred) # Only for sparse representation of data
 # acq_pred = get_acquisition_from_data(test[index])
 # acq_pred = write_event_to_acq(events, acq_pred)
-# write_acq_to_file(acq_pred, "testEventWriting.c3d")
+# write_acq_to_file(acq_pred, "testEventWritingSparse.c3d")
 
 
 
 
 # # Displays graphics with classified position of labels in (Y,Z) dimensions
-# show_graphic('LTOE', test[:10])
-# show_graphic('RTOE', test[:10])
+# show_graphic('LTOE', train)
+# show_graphic('RTOE', train)
 # plt.show()
+
+
+# Checks if all samples start with X coord in the negatives and ends in the positives
+# for sample in train:
+#     acq = get_acquisition_from_data(sample)
+#     px = acq.GetPoint('T10').GetValues()[(0,-1), 0]
+#     print(px)

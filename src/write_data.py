@@ -32,7 +32,7 @@ def write_acq_to_file(acq, file):
 
 
 
-def get_events_from_model(model, X):
+def get_events_from_dense_model(model, X):
     """Predicts the labels for X using the trained model and extracts the events
     from it.
     Inputs :    - model : a trained model of the SimpleNeuralNetwork class. It
@@ -71,6 +71,38 @@ def get_events_from_model(model, X):
     print("total length:", len(events))
     return events
 
+def get_events_from_sparse_model(model, X):
+    """Predicts the labels for X using the trained model and extracts the events
+    from it.
+    Inputs :    - model : a trained model of the SimpleNeuralNetwork class. It
+                    has to be trained with 'sparse' data representation.
+                - X : a list of input frames to classify. X has to be timely
+                    ordered else it doesn't makes sens to use this function.
+    Outputs :   - events : array of dictionnary containing "label", "context"
+                    and "frame" key where each element of the array represents
+                    a single event.
+    """
+
+    # Retrives the prediction of the model for input X
+    y_pred = np.array(model.predict(X).tolist())
+    y_pred = np.argmax(y_pred, axis=1)
+    print(y_pred)
+
+    events = []
+    for i in range(len(y_pred)):
+        frame = y_pred[i]
+
+        if(frame != 0):
+            context = "Left" if (frame < 2) else "Right"
+            label = "Foot_Strike_GS" if ((frame-1) % 2 == 0) else "Foot_Off_GS"
+
+            # Append the new event to the array
+            events.append( {"frame": i, "context": context, "label": label} )
+
+
+    print(events)
+    print("total length:", len(events))
+    return events
 
 def write_event_to_acq(events, acq):
     """Writes events to a given acq. Usualy to save the file later on.
