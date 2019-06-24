@@ -1,95 +1,60 @@
-
-# Librairies
-import numpy as np              #To deal with arrays in python
-import glob                     #To read filenames in folder
-
-# Our own functions
-from read_data import *
-from manipulation import *
-from write_data import *
-from visualize_data import *
-from SimpleNeuralNetwork import *
+import os
+import write_data
+import train_NN
 import matplotlib.pyplot as plt
 
-# reader = btk.btkAcquisitionFileReader()
-# reader.SetFilename("CP_GMFCS1_01916_20130128_18.c3d")
-# reader.Update()
-# acq = reader.GetOutput()
-# metadata = acq.GetMetaData()
-# point_labels = metadata.FindChild("POINT").value().FindChild("LABELS").value().GetInfo().ToString()
-#
-#
-# acq = sub_x_coord(point_labels, 'CP_GMFCS1_01916_20130128_18.c3d', 'T10')
-# write_acq(acq, 'updated.c3d')
+to_execute = 0
 
-# Some variables
-root = "data/"
-labels = ["RTOE", "LTOE", "RANK", "LANK", "RHEE", "LHEE", "T10"]
-learning_rate = 1e-4
-iter = 5000
-is_printing = True
-
-# We separate the data
-(train, test) = split_train_test_files(root)
-
-# We get the data (normalized) and we separate y and X
-X_train, y_train = get_data_by_labels(labels, train, method="dense")
-X_test, y_test = get_data_by_labels(labels, test, method="dense")
+# Cross validation for dense data
+# Hyperparameters to test
+if (to_execute == 0) :
+    epochs = 5000
+    middle_sizes = [[5],
+                    [15],
+                    [5, 5],
+                    [10, 15],
+                    [15, 5]]
+    # middle_sizes = [[5],
+    #                 [15]]
+    train_NN.cross_validation_hidden_layers_sizes(middle_sizes, epochs, "dense")
 
 
+# Cross validation for dense data
+# Hyperparameters to test
+if (to_execute == 1) :
+    epochs = 5000
+    middle_sizes = [[5],
+                    [15],
+                    [5, 5],
+                    [10, 15],
+                    [15, 5]]
+    # middle_sizes = [[5],
+    #                 [15]]
+    train_NN.cross_validation_hidden_layers_sizes(middle_sizes, epochs, "sparse")
 
-if (is_printing) :
-    print("##### Infos about the data #####")
-    print("X_train : ", X_train.shape)
-    print("y_train : ", y_train.shape)
-    print("X_test : ", X_test.shape)
-    print("y_test : ", y_test.shape)
+# Train best model we found and save the results
+if (to_execute == 2) :
+    root = "data/"
+    labels = ["RTOE", "LTOE", "RANK", "LANK", "RHEE", "LHEE", "T10"]
 
+    # We separate the data
+    (train, test) = split_train_test_files(root)
 
-input("Launch training with "+str(iter)+ " epochs ?")
+    # TODO: Train de model
 
-# We transform the state in a one hot encoded vector
-y = np.zeros((len(y_train), 5))
-for i in range (len(y_train)) :
-    y[i, (int)(y_train[i])] = 1
+    # Classify all frames of a video
+    index = np.random.randint(len(test))
+    classify_video(model, labels, test[index], "testEventW2.c3d", "dense")
+    pass
 
-# Hyperparameters
-hidden_sizes = [X_train.shape[1], 15, 10, 5]
-out_size = 5
+# Visualize data for separability
+if (to_execute == 3) :
+    # # Displays graphics with classified position of labels in (Y,Z) dimensions
+    # show_graphic('LTOE', train)
+    # show_graphic('RTOE', train)
+    # plt.show()
+    pass
 
-# Model
-model = SimpleNeuralNetwork(hidden_sizes, out_size, is_printing, iter, learning_rate)
-if (is_printing) : model.display()
-
-model.train(X_train, y)
-
-if (is_printing) :
-    y_pred = model.predict(X_train).tolist()
-    for i in range (10) :
-        pred = np.argmax(y_pred[i])
-        print("Prediction : ", pred, " and original : ", (int)(y_train[i]))
-
-print("Testing accuracy : ", model.test(X_test, y_test))
-
-model.display_loss_history()
-
-
-
-
-# Classify all frames of a video
-index = np.random.randint(len(test))
-classify_video(model, labels, test[index], "testEventW2.c3d", "dense")
-
-
-
-# # Displays graphics with classified position of labels in (Y,Z) dimensions
-# show_graphic('LTOE', train)
-# show_graphic('RTOE', train)
-# plt.show()
-
-
-# Checks if all samples start with X coord in the negatives and ends in the positives
-# for sample in train:
-#     acq = get_acquisition_from_data(sample)
-#     px = acq.GetPoint('T10').GetValues()[(0,-1), 0]
-#     print(px)
+# Substract x from a file and visualize it
+if (to_execute == 4) :
+    write_data.sub_x_from_file('CP_GMFCS1_01916_20130128_18.c3d', 'file_with_sub_x.c3d')

@@ -15,20 +15,31 @@ class SimpleNeuralNetwork(nn.Module) :
     is_printing = False
     iter = 1000
     learning_rate = 1e-4
-    loss_history = []
+    test_accuracy = 0
 
-    def __init__(self, hidden_sizes, out_size, is_printing, iter, learning_rate) :
+    def __init__(self, hidden_sizes, out_size, is_printing, iter, learning_rate, sub) :
         super(SimpleNeuralNetwork, self).__init__()
 
         self.is_printing = is_printing
         self.iter = iter
         self.learning_rate = learning_rate
+        self.loss_history = []
 
         self.hidden = nn.ModuleList()
         for k in range(len(hidden_sizes)-1):
             self.hidden.append(nn.Linear(hidden_sizes[k], hidden_sizes[k+1]))
 
         self.out = nn.Linear(hidden_sizes[-1], out_size)
+
+        self.description = ""
+        for i in range (len(hidden_sizes)-1) :
+            self.description += str(hidden_sizes[i]) + " --> "
+        self.description += str(hidden_sizes[-1])
+        self.description += "\nTraining with " + str(iter) + " epochs"
+        if (sub) :
+            self.description += " and by centralizing x coordinate."
+        else :
+            self.description += "."
 
     def forward(self, x) :
         # Feedforward
@@ -38,12 +49,9 @@ class SimpleNeuralNetwork(nn.Module) :
 
         return output
 
-    def display(self) :
-        print("\n##### Model infos #####")
-        params = list(self.parameters())
-        print("Number of parameters : ", len(params))
-        print(self, "\n")
-
+    def __str__(self) :
+        return self.description
+        
     def train(self, X, y) :
         """Function to train the network"""
         # Main algorithm
@@ -72,18 +80,18 @@ class SimpleNeuralNetwork(nn.Module) :
     def test(self, X, y) :
         y_pred = np.array(self.predict(X).tolist())
         y_pred = np.argmax(y_pred, axis=1)
-        return (y_pred == y.T).mean()
+        self.test_accuracy = (y_pred == y.T).mean()
 
     def predict(self, X) :
         return self(torch.from_numpy(X).float())
 
-    def display_loss_history(self) :
+    def display_loss_history(self, title_str) :
         time = np.arange(0, len(self.loss_history), 1)
 
         fig, ax = plt.subplots()
         ax.plot(time, self.loss_history)
 
         ax.set(xlabel='Epochs', ylabel='Loss',
-               title='Loss history for '+str(len(self.loss_history))+' epochs')
+               title=title_str)
         ax.grid()
         plt.show()

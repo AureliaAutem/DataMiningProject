@@ -36,6 +36,20 @@ def split_train_test_files(root) :
 
     return (train, test)
 
+def split_cross_validation_test_files(root, nb_blocs) :
+    (train, test) = split_train_test_files(root)
+
+    blocs = []
+    np.random.shuffle(train)
+    sep = round(len(train)/nb_blocs)
+    for i in range (nb_blocs-1) :
+        blocs += [train[i*sep:(i+1)*sep]]
+    blocs += [train[(i+1)*sep:]]
+
+    return (blocs, test)
+
+
+
 def split_train_validation_test_files(root) :
     """Get all c3d files in subfolders of root and split these files in
     3 groups : train (1/2), validation (1/4) and test (1/4)
@@ -101,7 +115,14 @@ def get_data_by_labels(labels, filenames, method="sparse", sub=False) :
         print("'" + method + "'" + ' is not a correct method name for the function get_data_by_labels(). Accepted values asre:\n\nsparse\ndense')
         exit(-1)
 
-    return (data[:-1, :].T, data[-1:, :].T)
+    X = data[:-1, :].T
+    y = data[-1:, :].T
+
+    #We shuffle the data
+    perm = np.random.permutation(X.shape[0])
+    X = np.take(X, perm, axis=0)
+    y = np.take(y, perm)
+    return (X, y)
 
 def get_sparse_data_from_file(labels, acq) :
     """Extract instances and classes from one particular file in 'sparse' method.
@@ -211,8 +232,6 @@ def get_dense_data_from_file(labels, acq) :
         res = acq.GetPoint(labels[i]).GetValues()[start_frame:end_frame+1, 0:3]
         X = np.concatenate((X, res), axis=1)
     X = scale(X, -1, 1)
-
-    # print(X.shape, vector.shape)
     X = np.column_stack((X, vector)).T
     return X
 
@@ -285,10 +304,10 @@ def define_dense_labels(event_frames, event_labels, event_contexts, start_frame,
                 right = 0
 
         if (i == len(event_frames)-1) :
-            vector[index : ] = left + right
+            vector[index : ] = left + right - 1
         else :
             next_index = event_frames[i+1] - event_frames[0]
-            vector[index : next_index] = left + right
+            vector[index : next_index] = left + right - 1
 
     return vector;
 
@@ -353,7 +372,7 @@ def get_prediction_X(labels, file):
                     all frames of a video.
     """
 
-    
+
     acq = get_acquisition_from_data(file)
 
     # We extract the frames where there are events
