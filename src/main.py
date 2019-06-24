@@ -76,15 +76,9 @@ model.display_loss_history()
 
 
 
-# # Classify all frames of a video
-# index = np.random.randint(len(test))
-# X_pred = get_prediction_X(labels, test[index])
-# events = get_events_from_dense_model(model, X_pred) # Only for dense representation of data
-# # events = get_events_from_sparse_model(model, X_pred) # Only for sparse representation of data
-# acq_pred = get_acquisition_from_data(test[index])
-# acq_pred = write_event_to_acq(events, acq_pred)
-# write_acq_to_file(acq_pred, "testEventWritingSparse.c3d")
-
+# Classify all frames of a video
+index = np.random.randint(len(test))
+classify_video(model, labels, test[index], "testEventW2.c3d", "dense")
 
 
 

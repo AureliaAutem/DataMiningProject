@@ -1,7 +1,7 @@
 #Librairies
 from btk import btk             #To read the data in .c3d files
 import numpy as np
-from read_data import get_acquisition_from_data
+from read_data import *
 
 def sub_x_coord(labels, file, to_sub):
     acq = get_acquisition_from_data(file)
@@ -39,9 +39,9 @@ def get_events_from_dense_model(model, X):
                     has to be trained with 'dense' data representation.
                 - X : a list of input frames to classify. X has to be timely
                     ordered else it doesn't makes sens to use this function.
-    Outputs :   - events : array of dictionnary containing "label", "context"
-                    and "frame" key where each element of the array represents
-                    a single event.
+    Outputs :   - events : array of dictionnary containing "label", "context",
+                    "frame" and "icon_id" key where each element of the array
+                    represents a single event.
     """
 
     # Retrives the prediction of the model for input X
@@ -56,13 +56,18 @@ def get_events_from_dense_model(model, X):
 
         # Whenever we encounter a different state, we encountered an event
         if(saved_state != frame):
+            if((saved_state == 2 and frame == 1) or (saved_state == 1 and frame == 2)):
+                print('WARNING Illegal transition from state', saved_state, "to", frame)
+
             # Logic of the event extraction
             diff = saved_state - frame
             context = "Left" if (abs(diff) > 1) else "Right"
-            label = "Foot_Strike_GS" if (diff < 0) else "Foot_Off_GS"
+            isFootStrike = (diff < 0)
+            label = "Foot_Strike_GS" if isFootStrike else "Foot_Off_GS"
+            icon_id = 1 if isFootStrike else 2
 
             # Append the new event to the array
-            events.append( {"frame": i, "context": context, "label": label} )
+            events.append( {"frame": i, "context": context, "label": label, "icon_id": icon_id} )
 
             # Update previous state
             saved_state = frame
@@ -78,9 +83,9 @@ def get_events_from_sparse_model(model, X):
                     has to be trained with 'sparse' data representation.
                 - X : a list of input frames to classify. X has to be timely
                     ordered else it doesn't makes sens to use this function.
-    Outputs :   - events : array of dictionnary containing "label", "context"
-                    and "frame" key where each element of the array represents
-                    a single event.
+    Outputs :   - events : array of dictionnary containing "label", "context",
+                    "frame" and "icon_id" key where each element of the array
+                    represents a single event.
     """
 
     # Retrives the prediction of the model for input X
@@ -94,10 +99,12 @@ def get_events_from_sparse_model(model, X):
 
         if(frame != 0):
             context = "Left" if (frame < 2) else "Right"
-            label = "Foot_Strike_GS" if ((frame-1) % 2 == 0) else "Foot_Off_GS"
+            isFootStrike = ((frame-1) % 2 == 0)
+            label = "Foot_Strike_GS" if isFootStrike else "Foot_Off_GS"
+            icon_id = 1 if isFootStrike else 2
 
             # Append the new event to the array
-            events.append( {"frame": i, "context": context, "label": label} )
+            events.append( {"frame": i, "context": context, "label": label, "icon_id": icon_id} )
 
 
     print(events)
@@ -125,8 +132,22 @@ def write_event_to_acq(events, acq):
         newEvent=btk.btkEvent() # build an empty event object
         newEvent.SetLabel(event["label"]) # set the label
         newEvent.SetContext(event["context"])
-        newEvent.SetFrame(event["frame"])
+        # newEvent.SetFrame(event["frame"])
+        newEvent.SetTime(event["frame"]/100)
         acq.AppendEvent(newEvent) # append the new event to the aquisition object
 
     # print("Now has", acq.GetEventNumber(), "events")
     return acq
+
+
+def classify_video(model, labels, in_file, out_file, method):
+    X_pred = get_prediction_X(labels, in_file)
+    if(method == "dense"):
+        events = get_events_from_dense_model(model, X_pred) # Only for dense representation of data
+    elif (method == "sparse"):
+        events = get_events_from_sparse_model(model, X_pred) # Only for sparse representation of data
+    else:
+        print("method '" + method + "' doesn't exist")
+    acq_pred = get_acquisition_from_data(in_file)
+    acq_pred = write_event_to_acq(events, acq_pred)
+    write_acq_to_file(acq_pred, out_file)
