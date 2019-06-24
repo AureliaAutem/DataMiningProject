@@ -8,10 +8,10 @@ import math                     #To use ceil / floor
 # Our own functions
 from read_data import *
 from manipulation import *
-from SimpleNeuralNetwork import *
 from write_data import *
+from visualize_data import *
+from SimpleNeuralNetwork import *
 import matplotlib.pyplot as plt
-from matplotlib.lines import Line2D
 
 
 # reader = btk.btkAcquisitionFileReader()
@@ -29,7 +29,7 @@ from matplotlib.lines import Line2D
 root = "data/"
 labels = ["RTOE", "LTOE", "RANK", "LANK", "RHEE", "LHEE", "T10"]
 learning_rate = 1e-4
-iter = 5000
+iter = 500
 is_printing = False
 method = "dense"
 sub = False
@@ -111,20 +111,26 @@ plt.show()
 
 
 
-# # Displays (Y,Z) coordinates of each point of a file for one label in a graphic
-# # for visual interpretation
-# x_disp, y_disp = get_2D_disp_data('LTOE', 'CP_GMFCS1_01916_20130128_18.c3d')
-# y_disp = y_disp.astype(int) - 1
-#
-# color_list = ['or', 'ob', 'og']
-# color = np.take(color_list, y_disp)
-#
-# legend_elements = [Line2D([0], [0], marker='o', color='r', label='Only right foot down'),
-#                    Line2D([0], [0], marker='o', color='b', label='Only left foot down'),
-#                    Line2D([0], [0], marker='o', color='g', label='Both feet down')]
-#
-# for i in range(len(y_disp)):
-#     plt.plot(x_disp[i, 0], x_disp[i, 1], color[i])
-#
-# plt.legend(handles=legend_elements)
+# # Classify all frames of a video
+# index = np.random.randint(len(test))
+# X_pred = get_prediction_X(labels, test[index])
+# events = get_events_from_dense_model(model, X_pred) # Only for dense representation of data
+# # events = get_events_from_sparse_model(model, X_pred) # Only for sparse representation of data
+# acq_pred = get_acquisition_from_data(test[index])
+# acq_pred = write_event_to_acq(events, acq_pred)
+# write_acq_to_file(acq_pred, "testEventWritingSparse.c3d")
+
+
+
+
+# # Displays graphics with classified position of labels in (Y,Z) dimensions
+# show_graphic('LTOE', train)
+# show_graphic('RTOE', train)
 # plt.show()
+
+
+# Checks if all samples start with X coord in the negatives and ends in the positives
+# for sample in train:
+#     acq = get_acquisition_from_data(sample)
+#     px = acq.GetPoint('T10').GetValues()[(0,-1), 0]
+#     print(px)

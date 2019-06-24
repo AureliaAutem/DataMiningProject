@@ -1,3 +1,33 @@
+from read_data import *
+
+import matplotlib.pyplot as plt
+from matplotlib.lines import Line2D
+
+def show_graphic(label, files):
+    # Displays (Y,Z) coordinates of each point of a file for one label in a graphic
+    # for visual interpretation
+    color_list = ['or', 'ob', 'og']
+
+    legend_elements = [Line2D([0], [0], marker='o', color='r', label='Only right foot down'),
+                       Line2D([0], [0], marker='o', color='b', label='Only left foot down'),
+                       Line2D([0], [0], marker='o', color='g', label='Both feet down')]
+
+    plt.figure()
+    for file in files:
+        x_disp, y_disp = get_2D_disp_data(label, file)
+        y_disp = y_disp.astype(int) - 1
+
+        color = np.take(color_list, y_disp)
+
+        for i in range(len(y_disp)):
+            plt.plot(x_disp[i, 1], x_disp[i, 0], color[i])
+
+    plt.legend(handles=legend_elements)
+    plt.title(label)
+    plt.ylabel('Y coordinate (Vertical height)')
+    plt.xlabel('Z coordinate (Complanar to T-pose human)')
+    plt.show(block=False)
+
 def get_2D_disp_data(label, filename) :
     """Used to get (Y,Z) data and associated class for a single file for data
     visualisation for kmeans"""

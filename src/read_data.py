@@ -359,3 +359,59 @@ def define_sparse_no_event_frames(event_frames, event_labels, event_contexts, st
         frames += [frame]
 
     return frames
+
+
+
+# For predictions
+def get_prediction_X(labels, file):
+    """Returns a timely ordered list of frames for the list of the given labels
+    in the given file.
+    Inputs :    - labels : array of labels to extract points from
+                - file : path of the file to extract values from
+    Outputs :   - X : the array ready to be given to model.predict() to classify
+                    all frames of a video.
+    """
+
+
+    acq = get_acquisition_from_data(file)
+
+    # We extract the frames where there are events
+    # n_events = acq.GetEventNumber() # Number of events
+    # n_frames = acq.GetPointFrameNumber() # give the number of frames
+
+    # event_frames = []
+    # event_labels = []
+    # event_contexts = []
+    # for event in [acq.GetEvent(event) for event in range(n_events)] :
+    #     event_frames += [event.GetFrame()]
+    #     event_labels += [event.GetLabel()]
+    #     event_contexts += [event.GetContext()]
+    #
+    # perm = np.argsort(event_frames)
+    # event_frames = np.take(event_frames, perm)
+    #
+    # event_labels = np.take(event_labels, perm)
+    # event_labels = (np.array(event_labels) == 'Foot_Strike_GS')
+    #
+    # event_contexts = np.take(event_contexts, perm)
+    # event_contexts = (np.array(event_contexts) == 'Left')
+    #
+    # first_frame = acq.GetFirstFrame()
+    # start_frame = first_frame
+    # end_frame = n_frames
+    # vector = define_dense_labels(event_frames, event_labels, event_contexts, start_frame, end_frame)
+
+    X = acq.GetPoint(labels[0]).GetValues()[:, 0:3]
+    for i in range (1, len(labels)):
+        res = acq.GetPoint(labels[i]).GetValues()[:, 0:3]
+        X = np.concatenate((X, res), axis=1)
+    X = scale(X, -1, 1)
+
+
+    # X_pred = X
+    # y_pred = vector
+
+    # print(n_frames)
+    # print(X_pred.shape)
+    # print(y_pred.shape)
+    return X
