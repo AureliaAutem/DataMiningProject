@@ -187,10 +187,9 @@ def get_dense_data_from_file(labels, acq) :
     we extract all frames from the first event to the last and we label them
     according to the feet position.
     Then we have 4 differents classes :
-    0 : both feet are off
-    1 : right foot is down
-    2 : left foot is down
-    3 : both feet are down
+    0 : right foot is down
+    1 : left foot is down
+    2 : both feet are down
     Inputs :    - labels : list of points we want to extract in the c3d file
                 - filename : relative path of the file
     Outputs :   - X : data of size (nb_labels+1, nb_frames)
