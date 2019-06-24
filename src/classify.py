@@ -1,6 +1,7 @@
 #Librairies
 # from btk import btk             #To read the data in .c3d files
 from read_data import *
+from write_data import *
 
 def classify_video(model, labels, in_file, out_file, method):
     X_pred = get_prediction_X(labels, in_file)
