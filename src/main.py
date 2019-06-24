@@ -7,7 +7,7 @@ from read_data import *
 from visualize_data import *
 import SimpleNeuralNetwork
 
-to_execute = 0
+to_execute = 3
 
 # Cross validation for dense data
 # Hyperparameters to test
