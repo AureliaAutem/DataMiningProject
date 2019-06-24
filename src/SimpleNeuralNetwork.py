@@ -15,7 +15,7 @@ class SimpleNeuralNetwork(nn.Module) :
     is_printing = False
     iter = 1000
     learning_rate = 1e-4
-    loss_history = []
+    test_accuracy = 0
 
     def __init__(self, hidden_sizes, out_size, is_printing, iter, learning_rate) :
         super(SimpleNeuralNetwork, self).__init__()
@@ -23,6 +23,7 @@ class SimpleNeuralNetwork(nn.Module) :
         self.is_printing = is_printing
         self.iter = iter
         self.learning_rate = learning_rate
+        self.loss_history = []
 
         self.hidden = nn.ModuleList()
         for k in range(len(hidden_sizes)-1):
@@ -72,7 +73,7 @@ class SimpleNeuralNetwork(nn.Module) :
     def test(self, X, y) :
         y_pred = np.array(self.predict(X).tolist())
         y_pred = np.argmax(y_pred, axis=1)
-        return (y_pred == y.T).mean()
+        self.test_accuracy = (y_pred == y.T).mean()
 
     def predict(self, X) :
         return self(torch.from_numpy(X).float())

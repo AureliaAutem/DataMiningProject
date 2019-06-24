@@ -36,6 +36,20 @@ def split_train_test_files(root) :
 
     return (train, test)
 
+def split_cross_validation_test_files(root, nb_blocs) :
+    (train, test) = split_train_test_files(root)
+
+    blocs = []
+    np.random.shuffle(train)
+    sep = round(len(train)/nb_blocs)
+    for i in range (nb_blocs-1) :
+        blocs += [train[i*sep:(i+1)*sep]]
+    blocs += [train[(i+1)*sep:]]
+
+    return (blocs, test)
+
+
+
 def split_train_validation_test_files(root) :
     """Get all c3d files in subfolders of root and split these files in
     3 groups : train (1/2), validation (1/4) and test (1/4)
@@ -101,7 +115,14 @@ def get_data_by_labels(labels, filenames, method="sparse", sub=False) :
         print("'" + method + "'" + ' is not a correct method name for the function get_data_by_labels(). Accepted values asre:\n\nsparse\ndense')
         exit(-1)
 
-    return (data[:-1, :].T, data[-1:, :].T)
+    X = data[:-1, :].T
+    y = data[-1:, :].T
+
+    #We shuffle the data
+    perm = np.random.permutation(X.shape[0])
+    X = np.take(X, perm, axis=0)
+    y = np.take(y, perm)
+    return (X, y)
 
 def get_sparse_data_from_file(labels, acq) :
     """Extract instances and classes from one particular file in 'sparse' method.
